@@ -190,20 +190,37 @@ def LassRegression_with_BatchGD(X, y, l1=0, excluede_x0=False, w0=None, lr=0.05,
         losses: a list of the loss values at each iteration
     """
     def lasso_loss(X, y, w, l1, exclude_x0): 
+        if exclude_x0:
+        # If we don't want to regulize the intercept, exclude the bias term in w when multiplying the regulization weight
+            return (X @ w - y).T @ (X @ w - y) + l1 * sum(abs(w[1:]))
+        else:
+            return (X @ w - y).T @ (X @ w - y) + l1 * sum(abs(w))
+    
+    def lasso_grad(X, y, l1, w, exclude_x0=False):
+        # define the subgradient of norm 1 of w
+        subgradient = np.zeros(w.shape)
+        for i in range(len(w)):
+            if w[i] > 0:
+                subgradient[i] = 1
+            elif w[i] < 0:
+                subgradient[i] = -1
+            else:
+                subgradient[i] = 0
+        
         reg = np.identity(X.shape[1])
+
         if exclude_x0:
         # Since if we don't want to regulize the intercept, we set i_{1,1} of the indentity matrix to be 0
             reg[0,0] = 0
-        return (np.norm(X @ w - y))**2 - l1 * reg * np.norm(w,1)
-            
+                  
+        return 2 * X.T @ (X @ w - y) + l1 * reg @ subgradient
     
-    def lasso_grad(l1, w):
-        l1_subgradient = np.where(w > 0, 1, np.where(w < 0, -1, 0))
-        return l1 * l1_subgradient
+    if w0 is None: 
+        w0 = np.zeros(X.shape[-1])
     
     return GradientDescent.batch_gradient_descent(w0,
                                                   loss_func=lambda w: lasso_loss(X,y,w,l1,excluede_x0),
-                                                  grad_loss_func=lambda w: lasso_grad(l1,w),
+                                                  grad_loss_func=lambda w: lasso_grad(X, y, l1,w),
                                                   lr = lr,
                                                   loss_stop=loss_stop, w_stop=weight_stop, max_iter=max_iter)
     
