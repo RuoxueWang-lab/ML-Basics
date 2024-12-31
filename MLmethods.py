@@ -156,7 +156,7 @@ def logistic_regression_with_stochastic_GD ( X, y, batch_size=1, w0=None, lr=0.0
                                                       loss_stop=loss_stop, w_stop=weight_stop, max_iter=max_iter)
     
 
-def LassRegression_with_BatchGD(X, y, l1=0, excluede_x0=False, w0=None, lr=0.05,
+def LassoRegression_with_BatchGD(X, y, l1=0, excluede_x0=False, w0=None, lr=0.05,
                                 loss_stop=1e-4, weight_stop=1e-4, max_iter=100):
     """
     Implement L1-penalised least-squares (lasso) regression
