@@ -134,3 +134,78 @@ def generate_noisy_poly_1d ( num_samples, weights, sigma, limits ):
     y = y + np.random.normal(scale=sigma, size=y.shape)
 
     return X, y
+
+
+def generate_margined_binary_data ( num_samples, count, limits):
+    """
+    Draw random samples from a linearly-separable binary model
+    with some non-negligible margin between classes. (The exact
+    form of the model is up to you.)
+
+    # Arguments
+        num_samples: number of samples to generate
+            (ie, the number of rows in the returned X
+            and the length of the returned y)
+        count: the number of feature dimensions
+        limits: a tuple (low, high) specifying the value
+            range of all the features x_i
+        rng: an instance of numpy.random.Generator
+            from which to draw random numbers
+
+    # Returns
+        X: a matrix of sample vectors, where
+            the samples are the rows and the
+            features are the columns
+            ie, its size should be:
+              num_samples x count
+        y: a vector of num_samples binary labels
+    """
+    # start with a lot more points than we need
+    X = np.random.uniform(low=limits[0], high=limits[1], size=(num_samples * 2, count))
+
+    # choose some margin size — in this case we'll clear the middle 1/4 of the space
+    margin = (limits[1] - limits[0])/8
+
+    # choose boundary as hyperplane passing through midpoint
+    # and perpendicular to first feature dimension
+    mid = (limits[0] + limits[1])/2
+
+    # keep points further than margin from this boundary
+    X = X[(X[:,0] < (mid-margin)) | (X[:,0] > (mid+margin)),:]
+
+    # labels are just which side we're on
+    y = X[:,0] > mid
+
+    # we should have plenty left, but randomness is always risky, so check
+    assert(len(y) >= num_samples)
+
+    return X[:num_samples,:], y[:num_samples]
+
+
+def generate_binary_nonlinear_2d(num_samples, limits):
+    """
+    Draw random samples from a binary model that is *not* linearly separable in its 2D feature space.
+
+    # Arguments
+    num_samples: number of samples to generate (ie, the number of rows in the returned X and the length of the returned y)
+    limits: a tuple (low, high) specifying the value range of all the features x_i
+    rng: an instance of numpy.random.Generator from which to draw random numbers
+
+    # Returns
+    X: a matrix of sample vectors, where the samples are the rows and the features are the columns
+       ie, its size should be: num_samples x count
+    y: a vector of num_samples binary labels
+    """
+
+    # Generate random 2D points in the specified range
+    X = np.random.uniform(limits[0], limits[1], size=(num_samples, 2))
+
+    # Internal function to generate binary labels
+    def binary_decision_stripes(X):
+        tmp = X[:, 0] + X[:, 1]
+        return (np.floor(tmp / 4) == np.floor((tmp + 2) / 4)).astype(int)
+
+    # Generate labels based on the binary decision function
+    y = binary_decision_stripes(X)
+
+    return X, y
